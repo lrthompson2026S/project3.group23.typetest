@@ -11,8 +11,7 @@ public class BaseTest extends student.TestCase {
     super.out().print(b);
   }
 
-  public void print(char c)
-  {
+  public void print(char c) {
     super.out().print(c);
   }
 

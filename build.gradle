@@ -1,0 +1,62 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.diffplug.spotless' version '8.10.4'
+}
+
+group = 'project3.group23.typetest'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation files('lib/student.jar')
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(23)
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs = ['src/main/java']
+        }
+    }
+}
+
+application {
+    mainClass = 'project3.group23.typetest.Main'
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
+}
+
+
+tasks.named('test', Test) {
+    jvmArgs '-Djava.security.manager=allow'
+}
+
+tasks.named('run', JavaExec) {
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+    standardInput = System.in
+}
+
+tasks.register('format') {
+    group = 'formatting'
+    description = 'Formats all source code.'
+    dependsOn 'spotlessApply'
+}
+
+tasks.register('check-format') {
+    group = 'verification'
+    description = 'Checks source code formatting.'
+    dependsOn 'spotlessCheck'
+}

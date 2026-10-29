@@ -9,15 +9,26 @@ permissions:
   contents: read
 
 jobs:
-  build-and-test:
-    name: Build, Test & Format
+  verify:
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Formatting
+            task: check-format
+          - name: Build
+            task: assemble
+          - name: Tests
+            task: test
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Set up Java 23
+      - name: Set up Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -26,11 +37,5 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Check formatting
-        run: ./gradlew check-format
-
-      - name: Build project
-        run: ./gradlew build
-
-      - name: Run tests
-        run: ./gradlew test
+      - name: Run ${{ matrix.name }}
+        run: ./gradlew ${{ matrix.task }}

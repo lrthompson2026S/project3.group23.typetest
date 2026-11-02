@@ -35,10 +35,18 @@ application {
 
 spotless {
     java {
-        googleJavaFormat()
+        // Use custom Eclipse JDT formatting
+        eclipse().configFile('config/java-formatter.properties')
+
+        // Organize imports
+        importOrder('java', 'javax', 'org', 'com', '')
+        removeUnusedImports()
+
+        // Clean whitespace
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 }
-
 
 tasks.named('test', Test) {
     jvmArgs '-Djava.security.manager=allow'

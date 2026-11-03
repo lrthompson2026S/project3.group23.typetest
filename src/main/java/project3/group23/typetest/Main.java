@@ -2,7 +2,7 @@ package project3.group23.typetest;
 
 public class Main
 {
-    static void main()
+    public static void main(String[] args)
     {
         System.out.println( String.format( "Hello and welcome!" ) );
 

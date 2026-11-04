@@ -52,11 +52,39 @@ spotless {
 
 tasks.named('test', Test) {
     jvmArgs '-Djava.security.manager=allow'
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
 }
 
-tasks.named('run', JavaExec) {
-    jvmArgs '--enable-native-access=ALL-UNNAMED'
-    standardInput = System.in
+tasks.named('run') {
+    dependsOn 'installDist'
+    notCompatibleWithConfigurationCache('spawns a child process')
+    actions.clear()
+
+    def launcher = javaToolchains.launcherFor(java.toolchain)
+    def installDir = tasks.named('installDist', Sync).map { it.destinationDir }
+    def mainCls = application.mainClass
+
+    doLast {
+        def isWin = System.getProperty('os.name').toLowerCase().contains('win')
+        def javaBin = launcher.get().executablePath.asFile.absolutePath
+        def cp = new File(installDir.get(), 'lib').absolutePath + File.separator + '*'
+
+        def cmd = [
+                    javaBin,
+                    '--enable-native-access=ALL-UNNAMED',
+                    '-Dpause.on.exit=true',
+                    '-cp', cp,
+                    mainCls.get()
+                ] + (args ?: [])
+
+        // A new console window gets a real console even when Gradle's JVM has none
+        if (isWin) {
+            cmd = ['cmd', '/c', 'start', 'Type Test', '/wait'] + cmd
+        }
+
+        def exit = new ProcessBuilder(cmd).inheritIO().start().waitFor()
+        if (exit != 0) throw new GradleException("Application exited with code ${exit}")
+    }
 }
 
 tasks.register('format') {

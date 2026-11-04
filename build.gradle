@@ -13,6 +13,8 @@ repositories {
 
 dependencies {
     implementation files('lib/student.jar')
+    implementation 'io.leego:banana:2.1.0'
+    implementation 'org.jline:jline-terminal-ffm:4.4.3'
 }
 
 java {
@@ -39,7 +41,7 @@ spotless {
         eclipse().configFile('config/java-formatter.properties')
 
         // Organize imports
-        importOrder('java', 'javax', 'org', 'com', '')
+        importOrder('java', 'javax', 'org', 'com', 'io', '')
         removeUnusedImports()
 
         // Clean whitespace

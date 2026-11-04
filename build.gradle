@@ -54,7 +54,6 @@ tasks.named('test', Test) {
     jvmArgs '-Djava.security.manager=allow'
     jvmArgs '--enable-native-access=ALL-UNNAMED'
 }
-
 tasks.named('run') {
     dependsOn 'installDist'
     notCompatibleWithConfigurationCache('spawns a child process')
@@ -69,20 +68,43 @@ tasks.named('run') {
         def javaBin = launcher.get().executablePath.asFile.absolutePath
         def cp = new File(installDir.get(), 'lib').absolutePath + File.separator + '*'
 
-        def cmd = [
-                    javaBin,
-                    '--enable-native-access=ALL-UNNAMED',
-                    '-Dpause.on.exit=true',
-                    '-cp', cp,
-                    mainCls.get()
-                ] + (args ?: [])
+        def cmd = [javaBin, '--enable-native-access=ALL-UNNAMED']
+        if (isWin) cmd += ['-Dpause.on.exit=true']
+        cmd += ['-cp', cp, mainCls.get()]
+        cmd += (args ?: [])
 
-        // A new console window gets a real console even when Gradle's JVM has none
         if (isWin) {
+            // New console window gets a real console even when Gradle's JVM has none
             cmd = ['cmd', '/c', 'start', 'Type Test', '/wait'] + cmd
         }
 
-        def exit = new ProcessBuilder(cmd).inheritIO().start().waitFor()
+        def startProcess = { boolean useTty ->
+            def pb = new ProcessBuilder(cmd)
+            if (useTty) {
+                def tty = new File('/dev/tty')
+                pb.redirectInput(ProcessBuilder.Redirect.from(tty))
+                pb.redirectOutput(ProcessBuilder.Redirect.appendTo(tty))
+                pb.redirectError(ProcessBuilder.Redirect.appendTo(tty))
+            } else {
+                pb.inheritIO()
+            }
+            return pb.start()
+        }
+
+        Process proc
+        if (isWin) {
+            proc = startProcess(false)
+        } else {
+            try {
+                proc = startProcess(true)
+            } catch (IOException e) {
+                // No controlling terminal available; fall back to inherited stdio
+                logger.warn("Could not attach to /dev/tty (${e.message}); using inherited stdio")
+                proc = startProcess(false)
+            }
+        }
+
+        def exit = proc.waitFor()
         if (exit != 0) throw new GradleException("Application exited with code ${exit}")
     }
 }

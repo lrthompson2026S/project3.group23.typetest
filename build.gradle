@@ -54,6 +54,7 @@ tasks.named('test', Test) {
     jvmArgs '-Djava.security.manager=allow'
     jvmArgs '--enable-native-access=ALL-UNNAMED'
 }
+
 tasks.named('run') {
     dependsOn 'installDist'
     notCompatibleWithConfigurationCache('spawns a child process')
@@ -64,7 +65,8 @@ tasks.named('run') {
     def mainCls = application.mainClass
 
     doLast {
-        def isWin = System.getProperty('os.name').toLowerCase().contains('win')
+        def osName = System.getProperty('os.name').toLowerCase()
+        def isWin = osName.contains('win')
         def javaBin = launcher.get().executablePath.asFile.absolutePath
         def cp = new File(installDir.get(), 'lib').absolutePath + File.separator + '*'
 
@@ -73,38 +75,42 @@ tasks.named('run') {
         cmd += ['-cp', cp, mainCls.get()]
         cmd += (args ?: [])
 
+        def pb
         if (isWin) {
-            // New console window gets a real console even when Gradle's JVM has none
-            cmd = ['cmd', '/c', 'start', 'Type Test', '/wait'] + cmd
-        }
+            // A new console window gets a real console even when Gradle's JVM has none
+            pb = new ProcessBuilder(['cmd', '/c', 'start', 'Type Test', '/wait'] + cmd)
+            pb.inheritIO()
+        } else {
+            // Gradle's forked build JVM has no controlling terminal, so walk up the
+            // process tree and find an ancestor whose stdin is a real terminal device
+            def findTty = {
+                def ph = ProcessHandle.current()
+                while (ph != null) {
+                    try {
+                        def target = java.nio.file.Files.readSymbolicLink(
+                                new File("/proc/${ph.pid()}/fd/0").toPath()).toString()
+                        if (target.startsWith('/dev/pts/') || target.startsWith('/dev/tty')) {
+                            return new File(target)
+                        }
+                    } catch (Exception ignored) { }
+                    ph = ph.parent().orElse(null)
+                }
+                return null
+            }
 
-        def startProcess = { boolean useTty ->
-            def pb = new ProcessBuilder(cmd)
-            if (useTty) {
-                def tty = new File('/dev/tty')
+            def tty = findTty()
+            pb = new ProcessBuilder(cmd)
+            if (tty != null) {
                 pb.redirectInput(ProcessBuilder.Redirect.from(tty))
                 pb.redirectOutput(ProcessBuilder.Redirect.appendTo(tty))
                 pb.redirectError(ProcessBuilder.Redirect.appendTo(tty))
             } else {
+                logger.warn('No terminal found in the parent processes; using inherited stdio')
                 pb.inheritIO()
             }
-            return pb.start()
         }
 
-        Process proc
-        if (isWin) {
-            proc = startProcess(false)
-        } else {
-            try {
-                proc = startProcess(true)
-            } catch (IOException e) {
-                // No controlling terminal available; fall back to inherited stdio
-                logger.warn("Could not attach to /dev/tty (${e.message}); using inherited stdio")
-                proc = startProcess(false)
-            }
-        }
-
-        def exit = proc.waitFor()
+        def exit = pb.start().waitFor()
         if (exit != 0) throw new GradleException("Application exited with code ${exit}")
     }
 }

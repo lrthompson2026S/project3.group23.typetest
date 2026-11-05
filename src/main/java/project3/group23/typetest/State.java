@@ -1,5 +1,7 @@
 package project3.group23.typetest;
 
+import java.util.List;
+
 public class State
 {
     private long generation = 0;

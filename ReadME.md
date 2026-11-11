@@ -122,6 +122,47 @@ lib/student.jar        course test framework
 
 ---
 
+## Reflection
+
+### Our unknowns from the scope, and what we found
+
+| What we didn't know | What we learned |
+|---|---|
+| How to make the terminal input and output behave the way we wanted with standard Java | Standard Java reads whole lines and cannot read single key presses. We used JLine 4 and put the terminal in raw mode (line buffering, echo, and signal handling turned off), so each key arrives immediately. A key map decodes arrow keys, Escape, Enter, and Backspace, and a read with a timeout keeps the game loop running while it waits for input. Banana-Utils supplies ANSI colors. All of this is hidden inside `Console`, so no other class depends on the terminal library. |
+| What the difficulty choice and scaling would look like | Partly answered. We replaced the typed number (1–3, 1–6) from the scope with an arrow-key menu of Easy, Medium, and Hard. This removed the out-of-range and non-numeric input cases. How difficulty changes the time limit and word length is still unfinished and is in Next Steps. |
+| What the scoring system would look like | Still open in the code. The scope settled that only fully completed words score and that longer words are worth more. The length groups and point values are proposed in Next Steps but not yet built. |
+
+### What worked
+
+- **The model/view split held up.** `State` and `Queue` use no terminal code, so they can be tested without one. The generation counter let us skip the Observer pattern: the view only redraws when the counter changes, and the model never refers to the view.
+- **Putting JLine behind one class.** Terminal problems stayed in `Console`, and the controller only ever sees `Action` records.
+- **Continuous integration from the start.** Formatting, build, and test checks run on every push and pull request.
+
+### What was harder than expected
+
+- **Running a terminal game through Gradle.** Gradle's JVM has no real terminal, so we wrote a custom `run` task that finds the terminal (or opens a new console window on Windows). Debugging needed its own script.
+- **Keeping the screen smooth.** Our first working version marks the state dirty on every loop, so it redraws constantly. We found this while preparing the plan and it is the second item to fix.
+- **Staying in sync with our own design.** The code drifted from the UML and spec: `Console` became a singleton, `Action` carries an `int` code point and an `OTHER` type, and `State` owns the screen flow. The docs need updating to match.
+
+### What changed from the scope
+
+| Change | Why | Where it came from |
+|---|---|---|
+| Menu-based difficulty instead of typed numbers | Removes a whole class of bad input and works better in a terminal game | Group discussion |
+| A `Screen` enum driving a menu, countdown, typing, and results flow | Needed one place to say what each key does on each screen | Group discussion |
+| `Queue<Action>` for input in addition to the planned word queue | The loop needs to collect keys during a timeout window and apply them in order | Our own design reflection |
+| Backspace on the typing screen | Added while building input handling; the scope said wrong keys just wait for the correct one, so we need to decide whether to keep it | Our own reflection |
+
+### What we would do differently
+
+- Write tests alongside each class instead of leaving them for the end. We have no tests yet beyond the shared `BaseTest`, and that is the biggest gap before Deliverable 4.
+- Update the UML and spec in the same pull request as any code change that affects them.
+- Build the word loading and scoring earlier, since they were the parts of the scope we understood least and the MVP depends on both.
+
+### GenAI use
+
+GenAI was used to draft this README, including the status table, Next Steps, and this reflection, from our scope, spec, and repository code. The scope document itself was written without GenAI.
+
 ## Next Steps
 
 This is the plan for Deliverable 4. The point values, time limits, and owners below are proposals for the team to confirm.

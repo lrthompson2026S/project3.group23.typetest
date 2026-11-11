@@ -154,20 +154,17 @@ public class State
     {
         if ( typedText.length() < currentWord.length() )
         {
-            if ( currentWord.charAt( typedText.length() ) == character )
-            {
-                correctCharacters++;
-                typedText += character;
-            }
-            else
-            {
-                incorrectCharacters++;
-            }
+            correctCharacters++;
+            typedText += character;
 
             if ( typedText.length() == currentWord.length() )
             {
                 advanceWord();
             }
+        }
+        else
+        {
+            incorrectCharacters++;
         }
         markDirty();
     }
@@ -213,7 +210,7 @@ public class State
         {
             if ( countDown <= 0 )
             {
-                countDown = 30;
+                countDown = 15;
                 screen = Screen.TYPING;
             }
         }

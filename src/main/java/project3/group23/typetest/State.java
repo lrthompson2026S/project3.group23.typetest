@@ -182,6 +182,16 @@ public class State
 
     }
 
+    public void backspace()
+    {
+        if ( !typedText.isEmpty() )
+        {
+            typedText = typedText.substring( 0, typedText.length() - 1 );
+            correctCharacters--;
+            markDirty();
+        }
+    }
+
     public void advanceWord()
     {
         List<String> words = wordsForDifficulty();

@@ -28,7 +28,7 @@ public class Display
 
             case COUNTDOWN -> {
                 console.append( "Get ready...\n" );
-                console.append( String.valueOf( Math.floor( state.getCountDown() * 10 ) / 10 + 1 ) );
+                console.append( String.valueOf( Math.floor( state.getCountDown() * 100 ) / 100 ) );
                 console.append( "...\n" );
             }
 

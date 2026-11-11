@@ -159,7 +159,7 @@ public class State
 
             if ( typedText.length() == currentWord.length() )
             {
-                submit();
+                advanceWord();
             }
         }
         else

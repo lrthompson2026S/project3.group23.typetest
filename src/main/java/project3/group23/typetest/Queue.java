@@ -1,5 +1,7 @@
 package project3.group23.typetest;
 
+import java.util.NoSuchElementException;
+
 public class Queue<T>
 {
     private Node<T> front;
@@ -7,15 +9,34 @@ public class Queue<T>
     private int size;
 
     public void enqueue( T value )
-    {}
+    {
+        Node<T> node = new Node<>( value );
+        if ( back == null )
+            front = node;
+        else
+            back.next = node;
+        back = node;
+        size++;
+    }
     public T dequeue()
-    { return null; }
+    {
+        T value = peek();
+        front = front.next;
+        size--;
+        if ( size == 0 )
+            back = null;
+        return value;
+    }
     public T peek()
-    { return null; }
+    {
+        if ( front == null )
+            throw new NoSuchElementException( "Queue is empty" );
+        return front.value;
+    }
     public boolean isEmpty()
-    { return false; }
+    { return size == 0; }
     public int size()
-    { return 0; }
+    { return size; }
 
     private static class Node<T>
     {
@@ -23,6 +44,6 @@ public class Queue<T>
         public Node<T> next;
 
         public Node(T value)
-        {}
+        { this.value = value; }
     }
 }

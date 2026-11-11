@@ -41,31 +41,43 @@ public class State
 
     public long getGeneration()
     { return generation; }
+
     public boolean isRunning()
     { return running; }
+
     public Screen getScreen()
     { return screen; }
+
     public int getSelectedOption()
     { return selectedOption; }
+
     public List<String> getMenuOptions()
     { return screen == Screen.DIFFICULTY_MENU ? DIFFICULTY_OPTIONS : MAIN_MENU_OPTIONS; }
+
     public Difficulty getDifficulty()
     { return difficulty; }
+
     public String getCurrentWord()
     { return currentWord; }
+
     public String getTypedText()
     { return typedText; }
+
     public void setTypedText( String text )
     {
         typedText = Objects.requireNonNull( text, "text" );
         markDirty();
     }
+
     public int getCorrectCharacters()
     { return correctCharacters; }
+
     public int getIncorrectCharacters()
     { return incorrectCharacters; }
+
     public double getCountDown()
     { return countDown; }
+
     public void moveSelection( int delta )
     {
         List<String> options = getMenuOptions();
@@ -76,6 +88,7 @@ public class State
         selectedOption = Math.floorMod( selectedOption + delta, options.size() );
         markDirty();
     }
+
     public void confirm()
     {
         switch (screen)
@@ -108,6 +121,7 @@ public class State
                 break;
         }
     }
+
     public void back()
     {
         switch (screen)
@@ -129,15 +143,16 @@ public class State
                 break;
         }
     }
+
     public void setDifficulty( Difficulty difficulty )
     {
         this.difficulty = Objects.requireNonNull( difficulty, "difficulty" );
         markDirty();
     }
+
     public void type( char character )
     {
-        if ( typedText.length() < currentWord.length()
-            && currentWord.charAt( typedText.length() ) == character )
+        if ( typedText.length() < currentWord.length() )
         {
             correctCharacters++;
             typedText += character;
@@ -153,13 +168,7 @@ public class State
         }
         markDirty();
     }
-    public void submit()
-    {
-        if ( typedText.equals( currentWord ) )
-        {
-            advanceWord();
-        }
-    }
+
     public void stop()
     {
         if ( running )
@@ -167,25 +176,19 @@ public class State
             running = false;
             markDirty();
         }
+
     }
+
     public void backspace()
     {
-        if ( typedText.isEmpty() )
+        if ( !typedText.isEmpty() )
         {
-            return;
-        }
-        int index = typedText.length() - 1;
-        if ( index < currentWord.length() && typedText.charAt( index ) == currentWord.charAt( index ) )
-        {
+            typedText = typedText.substring( 0, typedText.length() - 1 );
             correctCharacters--;
+            markDirty();
         }
-        else
-        {
-            incorrectCharacters--;
-        }
-        typedText = typedText.substring( 0, index );
-        markDirty();
     }
+
     public void advanceWord()
     {
         List<String> words = wordsForDifficulty();
@@ -194,6 +197,7 @@ public class State
         typedText = "";
         markDirty();
     }
+
     public void update( double deltaTime )
     {
         if ( deltaTime < 0 )

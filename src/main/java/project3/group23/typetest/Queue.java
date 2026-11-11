@@ -10,8 +10,8 @@ public class Queue<T>
 
     public void enqueue( T value )
     {
-        Node<T> node = new Node<>(value);
-        if (back == null)
+        Node<T> node = new Node<>( value );
+        if ( back == null )
         {
             front = node;
         }
@@ -27,7 +27,7 @@ public class Queue<T>
         T value = peek();
         front = front.next;
         size--;
-        if (size == 0)
+        if ( size == 0 )
         {
             back = null;
         }
@@ -35,22 +35,18 @@ public class Queue<T>
     }
     public T peek()
     {
-        if (front == null)
+        if ( front == null )
         {
-            throw new NoSuchElementException("Queue is empty");
+            throw new NoSuchElementException( "Queue is empty" );
         }
         return front.value;
     }
 
     public boolean isEmpty()
-    { 
-        return size == 0; 
-    }
+    { return size == 0; }
 
     public int size()
-    { 
-        return size; 
-    }
+    { return size; }
 
     private static class Node<T>
     {
@@ -58,8 +54,6 @@ public class Queue<T>
         public Node<T> next;
 
         public Node(T value)
-        { 
-            this.value = value; 
-        }
+        { this.value = value; }
     }
 }

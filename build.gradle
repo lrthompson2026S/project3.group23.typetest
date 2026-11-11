@@ -55,7 +55,7 @@ tasks.named('test', Test) {
     jvmArgs '--enable-native-access=ALL-UNNAMED'
 }
 
-tasks.named('run') {
+tasks.named('run', JavaExec) {
     dependsOn 'installDist'
     notCompatibleWithConfigurationCache('spawns a child process')
     actions.clear()
@@ -70,7 +70,16 @@ tasks.named('run') {
         def javaBin = launcher.get().executablePath.asFile.absolutePath
         def cp = new File(installDir.get(), 'lib').absolutePath + File.separator + '*'
 
+
         def cmd = [javaBin, '--enable-native-access=ALL-UNNAMED']
+
+        // Forward Gradle's debugging configuration to the actual JVM
+        if (debug) {
+            cmd += [
+                    '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=127.0.0.1:5005'
+            ]
+        }
+
         if (isWin) cmd += ['-Dpause.on.exit=true']
         cmd += ['-cp', cp, mainCls.get()]
         cmd += (args ?: [])

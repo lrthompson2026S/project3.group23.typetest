@@ -13,8 +13,12 @@ public class Game
 
     public Game()
     {
+        state = new State();
+        controller = new Controller(state);
+        display = new Display(state);
         actions = new Queue<>();
         console = Console.get();
+        lastGeneration = state.getGeneration();
     }
 
     public void run()
@@ -23,43 +27,26 @@ public class Game
         long end;
         double dt = 0;
 
-        boolean running = true;
-        while (running)
+        display.render();
+        while (state.isRunning())
         {
-            console.append( "   ".repeat( 3 ) ).append( "FPS: " )
-                .append( String.valueOf( 1 / Math.max( 1.0e-7, dt ) ) );
-            console.append( "\n" );
-            console.getActions( actions, 15 );
-            while (!actions.isEmpty())
+            console.getActions(actions, 15);
+            controller.process(actions);
+            state.update(dt);
+            state.endGeneration();
+            long currentGeneration = state.getGeneration();
+            if(lastGeneration != currentGeneration)
             {
-                console.append( "Input: " );
-                Action current = actions.dequeue();
-                switch (current.type())
-                {
-                    case ENTER -> console.append( "[ ENTER ]" );
-                    case ESCAPE -> {
-                        console.append( "[ ESCAPE ]" );
-                        running = false;
-                    }
-                    case ARROW_UP -> console.append( "[ ARROW UP ]" );
-                    case ARROW_DOWN -> console.append( "[ ARROW DOWN ]" );
-                    case CHARACTER -> console.append( "[ CHARACTER ] ('" )
-                        .append( Character.toString( current.value() ) ).append( "')" );
-                    default -> console.append( "[ UNKNOWN ]", Ansi.RED );
-                }
-                console.append( "\n" );
+                display.render();
+                lastGeneration = currentGeneration;
             }
-            console.clear();
-            console.display();
 
             end = System.nanoTime();
             dt = Math.max( 1, end - start ) * 1.0e-9;
             start = end;
         }
-
-        console.append( "---".repeat( 8 ) ).append( "  END  " ).append( "---".repeat( 8 ) );
         console.display();
-
+        console.display();
         console.close();
     }
 }

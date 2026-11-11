@@ -4,7 +4,7 @@ public record Action(Type type, int value) {
 
     public enum Type
     {
-        CHARACTER, ENTER, ESCAPE, ARROW_UP, ARROW_DOWN, OTHER
+        CHARACTER, ENTER, ESCAPE, ARROW_UP, ARROW_DOWN, BACKSPACE, OTHER
     }
 
     public Action(Type type)

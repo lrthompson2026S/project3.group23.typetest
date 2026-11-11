@@ -124,7 +124,7 @@ public class Console
                 }
                 else
                 {
-                    action = new Action( Type.CHARACTER, codePoint);
+                    action = new Action( Type.CHARACTER, codePoint );
                 }
             }
 

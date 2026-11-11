@@ -1,7 +1,5 @@
 package project3.group23.typetest;
 
-import io.leego.banana.Ansi;
-
 public class Game
 {
     private State state;
@@ -14,8 +12,8 @@ public class Game
     public Game()
     {
         state = new State();
-        controller = new Controller(state);
-        display = new Display(state);
+        controller = new Controller( state );
+        display = new Display( state );
         actions = new Queue<>();
         console = Console.get();
         lastGeneration = state.getGeneration();
@@ -30,12 +28,12 @@ public class Game
         display.render();
         while (state.isRunning())
         {
-            console.getActions(actions, 15);
-            controller.process(actions);
-            state.update(dt);
+            console.getActions( actions, 15 );
+            controller.process( actions );
+            state.update( dt );
             state.endGeneration();
             long currentGeneration = state.getGeneration();
-            if(lastGeneration != currentGeneration)
+            if ( lastGeneration != currentGeneration )
             {
                 display.render();
                 lastGeneration = currentGeneration;

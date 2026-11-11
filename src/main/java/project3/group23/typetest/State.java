@@ -197,17 +197,17 @@ public class State
         }
         countDown -= deltaTime;
 
-        if(screen == Screen.COUNTDOWN)
+        if ( screen == Screen.COUNTDOWN )
         {
-            if(countDown <= 0)
+            if ( countDown <= 0 )
             {
                 countDown = 30;
                 screen = Screen.TYPING;
             }
         }
-        if(screen == Screen.TYPING)
+        if ( screen == Screen.TYPING )
         {
-            if(countDown <= 0)
+            if ( countDown <= 0 )
             {
                 countDown = 0;
                 screen = Screen.RESULTS;
@@ -236,6 +236,5 @@ public class State
     }
 
     private void markDirty()
-    { dirty = true;
-    }
+    { dirty = true; }
 }

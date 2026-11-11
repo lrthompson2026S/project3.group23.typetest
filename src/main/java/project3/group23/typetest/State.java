@@ -9,8 +9,7 @@ public class State
     private static final List<String> DIFFICULTY_OPTIONS = List.of( "Easy", "Medium", "Hard" );
     private static final List<String> EASY_WORDS = List.of( "apple", "house", "river", "table" );
     private static final List<String> MEDIUM_WORDS = List.of( "keyboard", "computer", "practice", "language" );
-    private static final List<String> HARD_WORDS = List
-        .of( "polymorphism", "synchronization", "implementation", "characterization" );
+    private static final List<String> HARD_WORDS = List.of( "polymorphism", "synchronization", "implementation", "characterization" );
 
     private long generation = 0;
     private boolean dirty = false;
@@ -141,6 +140,11 @@ public class State
         {
             correctCharacters++;
             typedText += character;
+
+            if(typedText.length() == currentWord.length())
+            {
+                submit();
+            }
         }
         else
         {
@@ -201,7 +205,7 @@ public class State
         {
             if ( countDown <= 0 )
             {
-                countDown = 30;
+                countDown = 15;
                 screen = Screen.TYPING;
             }
         }

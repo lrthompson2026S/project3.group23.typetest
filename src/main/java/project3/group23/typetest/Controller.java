@@ -20,15 +20,11 @@ public class Controller
     {
         Screen screen = state.getScreen();
 
-        Console.get().append( "Action recieved\n" );
+        
         switch (action.type())
         {
             case ENTER -> {
-                if ( screen == Screen.TYPING )
-                {
-                    state.submit();
-                }
-                else
+                if ( screen != Screen.TYPING && screen != Screen.COUNTDOWN )
                 {
                     state.confirm();
                 }

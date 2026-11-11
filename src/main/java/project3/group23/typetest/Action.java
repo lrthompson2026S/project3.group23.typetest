@@ -1,10 +1,10 @@
 package project3.group23.typetest;
 
-public record Action(Type type, char value) {
+public record Action(Type type, int value) {
 
     public enum Type
     {
-        CHARACTER, BACKSPACE, ENTER, ESCAPE, ARROW_UP, ARROW_DOWN
+        CHARACTER, ENTER, ESCAPE, ARROW_UP, ARROW_DOWN, OTHER
     }
 
     public Action(Type type)
@@ -13,7 +13,7 @@ public record Action(Type type, char value) {
     public Type type()
     { return this.type; }
 
-    public char value()
+    public int value()
     { return this.value; }
 
 }

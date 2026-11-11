@@ -64,6 +64,9 @@ public class Console
 
         // enter key
         keys.bind( new Action( Type.ENTER, 0 ), "\r", "\n" );
+
+        // backspace key
+        keys.bind( new Action( Type.BACKSPACE ), "\u007f", "\b" );
     }
 
     public static Console get()

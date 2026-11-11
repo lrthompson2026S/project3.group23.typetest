@@ -22,6 +22,7 @@ public class Queue<T>
         back = node;
         size++;
     }
+
     public T dequeue()
     {
         T value = peek();

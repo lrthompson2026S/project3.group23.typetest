@@ -22,7 +22,22 @@ public class State
     private String typedText = "";
     private int correctCharacters;
     private int incorrectCharacters;
-    private long elapsedTime;
+    private double countDown;
+
+    public State()
+    {
+        generation = 0;
+        dirty = false;
+        running = true;
+        screen = Screen.MAIN_MENU;
+        selectedOption = 0;
+        difficulty = Difficulty.EASY;
+        currentWord = EASY_WORDS.get( 0 );
+        typedText = "";
+        correctCharacters = 0;
+        incorrectCharacters = 0;
+        countDown = 0.0;
+    }
 
     public long getGeneration()
     { return generation; }
@@ -49,8 +64,8 @@ public class State
     { return correctCharacters; }
     public int getIncorrectCharacters()
     { return incorrectCharacters; }
-    public long getElapsedTime()
-    { return elapsedTime; }
+    public double getCountDown()
+    { return countDown; }
     public void moveSelection( int delta )
     {
         List<String> options = getMenuOptions();
@@ -81,7 +96,7 @@ public class State
                 setDifficulty( Difficulty.values()[selectedOption] );
                 screen = Screen.COUNTDOWN;
                 selectedOption = 0;
-                elapsedTime = 0;
+                countDown = 3;
                 markDirty();
                 break;
             case RESULTS :
@@ -107,7 +122,7 @@ public class State
             case RESULTS :
                 screen = Screen.MAIN_MENU;
                 selectedOption = 0;
-                elapsedTime = 0;
+                countDown = 0;
                 markDirty();
                 break;
             default :
@@ -125,12 +140,12 @@ public class State
             && currentWord.charAt( typedText.length() ) == character )
         {
             correctCharacters++;
+            typedText += character;
         }
         else
         {
             incorrectCharacters++;
         }
-        typedText += character;
         markDirty();
     }
     public void submit()
@@ -174,15 +189,33 @@ public class State
         typedText = "";
         markDirty();
     }
-    public void update( long deltaTime )
+    public void update( double deltaTime )
     {
         if ( deltaTime < 0 )
         {
             throw new IllegalArgumentException( "deltaTime must not be negative" );
         }
-        elapsedTime += deltaTime;
+        countDown -= deltaTime;
+
+        if(screen == Screen.COUNTDOWN)
+        {
+            if(countDown <= 0)
+            {
+                countDown = 30;
+                screen = Screen.TYPING;
+            }
+        }
+        if(screen == Screen.TYPING)
+        {
+            if(countDown <= 0)
+            {
+                countDown = 0;
+                screen = Screen.RESULTS;
+            }
+        }
         markDirty();
     }
+
     public void endGeneration()
     {
         if ( dirty )
@@ -203,5 +236,6 @@ public class State
     }
 
     private void markDirty()
-    { dirty = true; }
+    { dirty = true;
+    }
 }

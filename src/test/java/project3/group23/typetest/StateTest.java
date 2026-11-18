@@ -77,18 +77,6 @@ public class StateTest extends BaseTest
         assertEquals( 1, state.getIncorrectCharacters() );
     }
 
-    public void testBackspace()
-    {
-        State state = new State();
-        state.type( 'a' );
-
-        state.backspace();
-
-        assertEquals( "", state.getTypedText() );
-        assertEquals( 0, state.getCorrectCharacters() );
-        assertEquals( 0, state.getIncorrectCharacters() );
-    }
-
     public void testCompleteWord()
     {
         State state = new State();

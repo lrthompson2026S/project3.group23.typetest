@@ -123,21 +123,20 @@ public class StateTest extends BaseTest
         assertEquals( 1, state.getGeneration() );
     }
 
-
     public void testIncorrectFeedbackAndRecovery()
     {
         State state = new State();
 
-        state.type('x');
-        assertEquals('x', state.getLastIncorrect());
-        assertEquals("", state.getTypedText());
-        assertEquals(1, state.getIncorrectCharacters());
+        state.type( 'x' );
+        assertEquals( 'x', state.getLastIncorrect() );
+        assertEquals( "", state.getTypedText() );
+        assertEquals( 1, state.getIncorrectCharacters() );
 
-        state.type('a');
-        assertEquals('\0', state.getLastIncorrect());
-        assertEquals("a", state.getTypedText());
-        assertEquals(1, state.getCorrectCharacters());
-        assertEquals(1, state.getIncorrectCharacters());
+        state.type( 'a' );
+        assertEquals( '\0', state.getLastIncorrect() );
+        assertEquals( "a", state.getTypedText() );
+        assertEquals( 1, state.getCorrectCharacters() );
+        assertEquals( 1, state.getIncorrectCharacters() );
     }
 
     public void testRoundResets()
@@ -145,22 +144,22 @@ public class StateTest extends BaseTest
         State state = new State();
         state.confirm();
         state.confirm();
-        state.update(3.0);
-        state.update(0.5);
+        state.update( 3.0 );
+        state.update( 0.5 );
 
-        state.type('a');
-        state.type('x');
+        state.type( 'a' );
+        state.type( 'x' );
 
         state.back();
         state.confirm();
         state.confirm();
 
-        assertEquals("", state.getTypedText());
-        assertEquals(0, state.getCorrectCharacters());
-        assertEquals(0, state.getIncorrectCharacters());
-        assertEquals('\0', state.getLastIncorrect());
-        assertEquals("apple", state.getCurrentWord());
-        assertEquals(Screen.COUNTDOWN, state.getScreen());
+        assertEquals( "", state.getTypedText() );
+        assertEquals( 0, state.getCorrectCharacters() );
+        assertEquals( 0, state.getIncorrectCharacters() );
+        assertEquals( '\0', state.getLastIncorrect() );
+        assertEquals( "apple", state.getCurrentWord() );
+        assertEquals( Screen.COUNTDOWN, state.getScreen() );
     }
 
     public void testNullDifficulty()
@@ -169,12 +168,12 @@ public class StateTest extends BaseTest
 
         try
         {
-            state.setDifficulty(null);
-            fail("Expected NullPointerException");
+            state.setDifficulty( null );
+            fail( "Expected NullPointerException" );
         }
         catch (NullPointerException exception)
         {
-            assertEquals(Difficulty.EASY, state.getDifficulty());
+            assertEquals( Difficulty.EASY, state.getDifficulty() );
         }
     }
 
@@ -184,13 +183,14 @@ public class StateTest extends BaseTest
 
         try
         {
-            state.update(-1.0);
-            fail("Expected IllegalArgumentException");
+            state.update( -1.0 );
+            fail( "Expected IllegalArgumentException" );
         }
         catch (IllegalArgumentException exception)
         {
-            assertEquals("deltaTime must not be negative",
-                exception.getMessage());
+            assertEquals(
+                "deltaTime must not be negative",
+                exception.getMessage() );
         }
     }
 
@@ -198,11 +198,11 @@ public class StateTest extends BaseTest
     {
         State state = new State();
 
-        state.moveSelection(0);
+        state.moveSelection( 0 );
         state.endGeneration();
 
-        assertEquals(0, state.getSelectedOption());
-        assertEquals(0, state.getGeneration());
+        assertEquals( 0, state.getSelectedOption() );
+        assertEquals( 0, state.getGeneration() );
     }
 
     public void testConfirmIgnoredWhileTyping()
@@ -210,12 +210,12 @@ public class StateTest extends BaseTest
         State state = new State();
         state.confirm();
         state.confirm();
-        state.update(3.0);
-        state.update(0.5);
+        state.update( 3.0 );
+        state.update( 0.5 );
 
         state.confirm();
 
-        assertEquals(Screen.TYPING, state.getScreen());
+        assertEquals( Screen.TYPING, state.getScreen() );
     }
 
     public void testAdvanceWordWrap()
@@ -223,16 +223,34 @@ public class StateTest extends BaseTest
         State state = new State();
 
         state.advanceWord();
-        assertEquals("house", state.getCurrentWord());
+        assertEquals( "house", state.getCurrentWord() );
 
         state.advanceWord();
-        assertEquals("river", state.getCurrentWord());
+        assertEquals( "river", state.getCurrentWord() );
 
         state.advanceWord();
-        assertEquals("table", state.getCurrentWord());
+        assertEquals( "table", state.getCurrentWord() );
 
         state.advanceWord();
-        assertEquals("apple", state.getCurrentWord());
+        assertEquals( "apple", state.getCurrentWord() );
+    }
+
+
+
+    public void testBackFromGoScreen()
+    {
+        State state = new State();
+
+        state.confirm();
+        state.confirm();
+        state.update( 3.0 );
+
+        assertEquals( Screen.GO_SCREEN, state.getScreen() );
+
+        state.back();
+
+        assertEquals( Screen.MAIN_MENU, state.getScreen() );
+        assertEquals( 0.0, state.getCountDown() );
     }
 
 }

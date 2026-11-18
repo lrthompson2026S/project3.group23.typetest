@@ -93,29 +93,28 @@ public class QueueTest extends BaseTest
         }
     }
 
-
     public void testInterleavedOperations()
     {
         Queue<Integer> queue = new Queue<>();
 
-        queue.enqueue(1);
-        queue.enqueue(2);
+        queue.enqueue( 1 );
+        queue.enqueue( 2 );
 
-        assertEquals(1, (int) queue.dequeue());
+        assertEquals( 1, (int) queue.dequeue() );
 
-        queue.enqueue(3);
-        queue.enqueue(4);
+        queue.enqueue( 3 );
+        queue.enqueue( 4 );
 
-        assertEquals(2, (int) queue.dequeue());
-        assertEquals(3, (int) queue.dequeue());
+        assertEquals( 2, (int) queue.dequeue() );
+        assertEquals( 3, (int) queue.dequeue() );
 
-        queue.enqueue(5);
+        queue.enqueue( 5 );
 
-        assertEquals(4, (int) queue.dequeue());
-        assertEquals(5, (int) queue.dequeue());
+        assertEquals( 4, (int) queue.dequeue() );
+        assertEquals( 5, (int) queue.dequeue() );
 
-        assertTrue(queue.isEmpty());
-        assertEquals(0, queue.size());
+        assertTrue( queue.isEmpty() );
+        assertEquals( 0, queue.size() );
     }
 
 }

@@ -135,10 +135,10 @@ public class State
                 selectedOption = 0;
                 markDirty();
                 break;
-            case COUNTDOWN:
-            case GO_SCREEN:
-            case TYPING:
-            case RESULTS:
+            case COUNTDOWN :
+            case GO_SCREEN :
+            case TYPING :
+            case RESULTS :
                 screen = Screen.MAIN_MENU;
                 selectedOption = 0;
                 countDown = 0;

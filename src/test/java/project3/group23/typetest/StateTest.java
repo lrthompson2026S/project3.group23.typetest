@@ -235,8 +235,6 @@ public class StateTest extends BaseTest
         assertEquals( "apple", state.getCurrentWord() );
     }
 
-
-
     public void testBackFromGoScreen()
     {
         State state = new State();

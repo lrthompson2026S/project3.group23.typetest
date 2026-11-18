@@ -20,7 +20,6 @@ public class Controller
     {
         Screen screen = state.getScreen();
 
-        
         switch (action.type())
         {
             case ENTER -> {

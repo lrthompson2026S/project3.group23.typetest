@@ -1,241 +1,422 @@
 # Type Test
 
-A simple, non-blocking console typing game written in Java. Pick a difficulty, wait out a 3-2-1 countdown, then type each word you are shown, letter by letter, before the timer runs out. Finish as many words as you can.
+A non-blocking console typing game written in Java. Players select a difficulty, complete a countdown, and type as many words as possible before the timer runs out. Correct and incorrect keystrokes receive colored feedback, and the results screen displays the number of correct and incorrect characters entered.
 
-**Group 23** — Lucas Thompson, Krish, Josiah Samuel
+**Group 23 — Lucas Thompson, Krish, Josiah Samuel**
 
 ---
 
-## How to play
+## How to Play
 
-1. From the main menu, choose **Start** (or **Quit**).
-2. Pick a difficulty: **Easy**, **Medium**, or **Hard**.
-3. After the countdown, a target word appears. Type its letters in order.
-   - A correct letter advances you through the word.
-   - A wrong letter does not advance you; type the correct letter to continue.
-   - Finish the whole word to move on to the next one. Partial words earn nothing.
-4. When the timer reaches zero the round ends and your results are shown. Press **Enter** to return to the main menu.
+1. From the main menu, select **Start** or **Quit**.
+2. Choose a difficulty: **Easy**, **Medium**, or **Hard**.
+3. Wait through the 3-2-1 countdown and brief GO screen.
+4. Type the displayed word, one character at a time:
+   - Correct letters advance your progress and appear green.
+   - Incorrect letters appear red underneath the word and do not advance your progress.
+   - Typing the expected character after a mistake clears the incorrect-character indicator.
+   - Completing the word automatically advances to the next word.
+5. When the 15-second round ends, the results screen displays the correct and incorrect character counts. Press Enter to return to the main menu.
 
 ### Controls
 
-| Key | Action |
-|---|---|
-| Up / Down | Move the menu selection |
-| Enter | Confirm a menu choice / leave the results screen |
-| Esc | Go back one screen (quits from the main menu) |
-| Letters | Type the target word (input is lowercased) |
-| Backspace | Remove the last typed letter |
+| Key       | Action                                                            |
+| --------- | ----------------------------------------------------------------- |
+| Up / Down | Move through menu options                                         |
+| Enter     | Confirm a menu selection or leave the results screen              |
+| Escape    | Return to the main menu from gameplay, or quit from the main menu |
+| Letters   | Type the current word (input is lowercased)                       |
+| Backspace | Recognized but currently ignored during gameplay                  |
 
 ---
 
-## Building and running
+## Building and Running
 
-**Requirements:** JDK 23 (the Gradle toolchain is set to Java 23). The Gradle wrapper is included, so no separate Gradle install is needed.
+**Requirements:** JDK 23. The Gradle wrapper is included, so a separate Gradle installation is not required.
 
 ```bash
-./gradlew run            # build and launch the game
-./gradlew test           # run the tests
-./gradlew format         # auto-format the source (Spotless)
-./gradlew check-format   # verify formatting (also run in CI)
+./gradlew run            # Build and launch the game
+./gradlew test           # Run automated tests
+./gradlew assemble       # Compile and build the project
+./gradlew format         # Apply source formatting
+./gradlew check-format   # Verify formatting
 ```
 
-On Windows use `gradlew.bat`. The `run` task launches the game in its own console window, because the game needs a real terminal for raw keyboard input. On Linux/macOS it finds the terminal of the parent process. `start-debug.ps1` starts the game with the JVM debugger attached on port 5005.
+The custom Gradle run task opens a separate console window on Windows because the game needs a real terminal for raw keyboard input. On Linux, it attempts to locate an appropriate parent terminal. The included `start-debug.ps1` script supports JVM debugging on port 5005.
 
-**Dependencies** (declared in `build.gradle`):
+### Dependencies
 
-- [JLine](https://github.com/jline/jline3) `4.4.6` — raw terminal input and output
-- [Banana-Utils](https://github.com/leego/banana-utils) `2.1.0` — ANSI foreground/background colors
-- `lib/student.jar` — course test framework (`student.TestCase`)
+- **JLine 4.4.6:** Raw terminal input and output.
+- **Banana 2.1.0:** ANSI colors and text formatting.
+- **student.jar:** Course-provided testing framework.
 
-Continuous integration (`.github/workflows/ci.yml`) runs the formatting check, the build, and the tests on every push and pull request to `main`.
+### Running Tests
+
+Tests are located under `src/test/java/project3/group23/typetest/` and use the course-provided `student.TestCase` framework through our `BaseTest` class.
+
+Run all tests using:
+
+```bash
+./gradlew test
+```
+
+The current repository contains **33 test methods**:
+
+| Test Class       |  Tests | Coverage                                                                                            |
+| ---------------- | -----: | --------------------------------------------------------------------------------------------------- |
+| `QueueTest`      |      8 | FIFO ordering, empty-queue exceptions, null values, reuse, interleaved operations                   |
+| `StateTest`      |     21 | Navigation, typing, feedback, countdown transitions, invalid arguments, round resets, timer updates |
+| `ControllerTest` |      4 | Normal input handling, invalid menu input, unsupported characters, and ignored backspace            |
+| **Total**        | **33** |                                                                                                     |
+
+The tests exercise the model independently of the terminal and view. `ControllerTest` also tests interaction between the controller and model without creating a `Display` or `Console`.
+
+The latest GitHub Actions run on `main` successfully completed the build, formatting, and test jobs on November 18, 2026.
+
+GitHub Actions automatically runs these checks on pushes and pull requests to `main`.
 
 ---
 
 ## Architecture
 
-The project follows Model-View-Controller. No class spans two roles. The model has no knowledge of the view, the controller, or the terminal.
+The project follows the Model-View-Controller (MVC) pattern, separating game state, user input, and rendering.
 
-| Role | Class | Responsibility |
-|---|---|---|
-| **Model** | `State` | All game state (current screen, menu selection, difficulty, current word, typed text, correct/incorrect counts, timer) and the logic that modifies and validates it |
-| **Model** | `Queue<T>` | Generic singly linked FIFO queue (`enqueue`, `dequeue`, `peek`, `isEmpty`, `size`). Currently holds pending input `Action`s |
-| **Model** | `Screen`, `Difficulty` | Enums for the current screen and the selected difficulty |
-| **View** | `Display` | Reads `State` through getters and draws the current screen. It never modifies the model or interprets input |
-| **Controller** | `Controller` | Takes queued `Action`s and translates them into `State` operations, depending on the current screen |
-| **Controller** | `Action` | Immutable record for one input event: a `Type` (character, enter, escape, arrows, backspace, other) plus a code point |
-| Coordination | `Game` | Owns `State`, `Controller`, `Display`, and the `Queue<Action>`; runs the input, update, render loop |
-| Infrastructure | `Console` | Wraps JLine: puts the terminal in raw mode, converts key presses into `Action`s (non-blocking, with a timeout), and buffers styled output until `display()` |
-| Infrastructure | `Main` | Entry point; runs `Game` and restores the terminal on exit |
+| Role           | Class                  | Responsibility                                                                                                  |
+| -------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Model          | `State`                | Holds game state, word progression, timers, difficulty, menu selection, character counts, and state transitions |
+| Model          | `Queue<T>`             | Generic singly linked FIFO queue used for pending input actions                                                 |
+| Model          | `Screen`, `Difficulty` | Enums representing the current screen and difficulty                                                            |
+| Controller     | `Controller`           | Processes input actions and calls the appropriate model methods                                                 |
+| Controller     | `Action`               | Immutable record representing a keyboard input event                                                            |
+| View           | `Display`              | Renders the current model state, including menus, countdown, colored typing feedback, and results               |
+| Coordination   | `Game`                 | Coordinates the input, update, and rendering loop                                                               |
+| Infrastructure | `Console`              | Handles terminal input, output, key decoding, and colors through JLine and Banana                               |
+| Infrastructure | `Main`                 | Application entry point                                                                                         |
 
-### How the loop works
+### Main Loop
 
-Each pass of `Game.run()`:
+Each iteration of `Game.run()` performs the following operations:
 
-1. `Console.getActions` reads keys for up to 15 ms and enqueues them as `Action`s.
-2. `Controller.process` drains the queue in order and calls the matching `State` methods.
-3. `State.update(dt)` advances the countdown and round timer.
-4. `State.endGeneration()` increments a **generation counter** if anything changed.
-5. If the generation differs from the last one drawn, `Display.render()` redraws the screen.
+1. `Console.getActions()` collects input events into `Queue<Action>`.
+2. `Controller.process()` consumes those actions and calls the appropriate `State` methods.
+3. `State.update(dt)` advances the countdown or round timer when appropriate.
+4. `State.endGeneration()` increments the generation counter if the model changed.
+5. `Game` compares the generation counter with the last rendered generation and redraws through `Display` when necessary.
 
-### Model / view boundary
+### Model/View Boundary
 
-`Display` knows only `State`'s public getters. `State` does not know `Display` exists. Instead of the Observer pattern, the view learns about changes through the generation counter: every mutation marks the state dirty, `endGeneration()` bumps the counter once per loop, and `Game` re-renders only when the counter moved. This lets many input events be processed before a single redraw, and lets `State` and `Queue` be tested without a terminal.
+The model does not depend on the terminal or display implementation.
 
-### Project layout
+`Display` only accesses game information through the public getters in `State` and does not maintain a separate copy of model state. `Controller` translates input events into model operations without directly modifying the view.
 
-```
+Instead of implementing an Observer pattern, we use a generation counter to determine when the view should redraw.
+
+We also improved `State.update()` so the timer only advances while the game is in one of three states:
+
+- `COUNTDOWN`
+- `GO_SCREEN`
+- `TYPING`
+
+The method returns without updating the timer or dirty-state flag on the main menu, difficulty menu, and results screen. This prevents unnecessary redraws on inactive screens.
+
+Active timer screens still redraw frequently, so additional rendering optimization remains possible.
+
+### Project Layout
+
+```text
 src/main/java/project3/group23/typetest/
-    Main.java          entry point
-    Game.java          main loop
-    State.java         model
-    Queue.java         model (generic linked FIFO queue)
-    Screen.java        model enum
-    Difficulty.java    model enum
-    Controller.java    controller
-    Action.java        controller input record
-    Display.java       view
-    Console.java       JLine wrapper
+    Main.java
+    Game.java
+    State.java
+    Queue.java
+    Screen.java
+    Difficulty.java
+    Controller.java
+    Action.java
+    Display.java
+    Console.java
+
 src/test/java/project3/group23/typetest/
-    BaseTest.java      shared test base class
-config/                Spotless formatter settings
-lib/student.jar        course test framework
+    BaseTest.java
+    QueueTest.java
+    StateTest.java
+    ControllerTest.java
+
+config/
+lib/student.jar
 ```
 
 ---
 
-## Current status
+## Current Status
 
-| MVP feature | Status |
-|---|---|
-| Main menu and difficulty menu with arrow-key selection | Done |
-| 3-2-1 countdown, then timed typing round | Done (timer is a fixed 30 s for all difficulties) |
-| Type the word letter by letter; wrong letter does not advance | Done (wrong letters are counted but not yet shown) |
-| Next word appears when the word is complete | Done (from a small hard-coded list per difficulty) |
-| Time-left counter | Done |
-| Results screen | Partly done (shows correct/incorrect counts, no score yet) |
-| Green/red letter feedback | Not started |
-| Words loaded from a file, shuffled, and queued | Not started |
-| Scoring by word-length group | Not started |
-| Difficulty scaling (time limit and word length) | Not started |
-| Bad-input handling (missing/empty word file, invalid words) | Not started |
-| Automated tests | Not started (only the shared `BaseTest` exists) |
+| Feature                                          | Status           |
+| ------------------------------------------------ | ---------------- |
+| Main menu and difficulty selection               | Complete         |
+| Controller-driven gameplay                       | Complete         |
+| Correct character typing and word progression    | Complete         |
+| Incorrect input validation                       | Complete         |
+| Green/red character feedback                     | Complete         |
+| 3-2-1 countdown and GO transition                | Complete         |
+| 15-second typing round                           | Complete         |
+| Round initialization and counter resets          | Complete         |
+| Results screen with correct/incorrect counts     | Complete         |
+| Different hard-coded word lists per difficulty   | Complete         |
+| Timer restricted to active game states           | Complete         |
+| Queue and model unit tests                       | 33 passing tests |
+| File-based word loading and shuffling            | Not implemented  |
+| Scoring by completed word length                 | Not implemented  |
+| Difficulty-based round durations                 | Not implemented  |
+| Persistent high scores                           | Not implemented  |
+| Additional optimization of active-screen redraws | Not implemented  |
+
+The current prototype supports the core typing interaction, including a playable round, menu navigation, visual feedback, and results.
+
+The remaining MVP work focuses on word loading, scoring, and difficulty scaling.
 
 ---
 
 ## Reflection
 
-### Our unknowns from the scope, and what we found
+### How Our Design Absorbed the Change
 
-| What we didn't know | What we learned |
-|---|---|
-| How to make the terminal input and output behave the way we wanted with standard Java | Standard Java reads whole lines and cannot read single key presses. We used JLine 4 and put the terminal in raw mode (line buffering, echo, and signal handling turned off), so each key arrives immediately. A key map decodes arrow keys, Escape, Enter, and Backspace, and a read with a timeout keeps the game loop running while it waits for input. Banana-Utils supplies ANSI colors. All of this is hidden inside `Console`, so no other class depends on the terminal library. |
-| What the difficulty choice and scaling would look like | Partly answered. We replaced the typed number (1–3, 1–6) from the scope with an arrow-key menu of Easy, Medium, and Hard. This removed the out-of-range and non-numeric input cases. How difficulty changes the time limit and word length is still unfinished and is in Next Steps. |
-| What the scoring system would look like | Still open in the code. The scope settled that only fully completed words score and that longer words are worth more. The length groups and point values are proposed in Next Steps but not yet built. |
+In our Deliverable 3 Next Steps, we originally planned to implement persistent high scores as our Deliverable 4 change feature. This would have required a new high-score model, additional screens, and file persistence.
 
-### What worked
+After working with the prototype, we decided that our core gameplay needed more attention before adding stretch goals. We prioritized correcting typing behavior, improving the countdown and visual feedback, and adding automated tests.
 
-- **The model/view split held up.** `State` and `Queue` use no terminal code, so they can be tested without one. The generation counter let us skip the Observer pattern: the view only redraws when the counter changes, and the model never refers to the view.
-- **Putting JLine behind one class.** Terminal problems stayed in `Console`, and the controller only ever sees `Action` records.
-- **Continuous integration from the start.** Formatting, build, and test checks run on every push and pull request.
+Rather than implementing persistent high scores, we completed two related gameplay changes.
 
-### What was harder than expected
+**1. Correct and incorrect character feedback**
 
-- **Running a terminal game through Gradle.** Gradle's JVM has no real terminal, so we wrote a custom `run` task that finds the terminal (or opens a new console window on Windows). Debugging needed its own script.
-- **Keeping the screen smooth.** Our first working version marks the state dirty on every loop, so it redraws constantly. We found this while preparing the plan and it is the second item to fix.
-- **Staying in sync with our own design.** The code drifted from the UML and spec: `Console` became a singleton, `Action` carries an `int` code point and an `OTHER` type, and `State` owns the screen flow. The docs need updating to match.
+Previously, the typing behavior and handling of incorrect input were incomplete. We changed `State.type()` to compare the entered character with the expected character before advancing.
 
-### What changed from the scope
+Correct letters now advance progress and are rendered in green. Incorrect letters do not advance progress and are tracked separately through the `lastIncorrect` field, which `Display` uses to show the last incorrect character in red.
 
-| Change | Why | Where it came from |
-|---|---|---|
-| Menu-based difficulty instead of typed numbers | Removes a whole class of bad input and works better in a terminal game | Group discussion |
-| A `Screen` enum driving a menu, countdown, typing, and results flow | Needed one place to say what each key does on each screen | Group discussion |
-| `Queue<Action>` for input in addition to the planned word queue | The loop needs to collect keys during a timeout window and apply them in order | Our own design reflection |
-| Backspace on the typing screen | Added while building input handling; the scope said wrong keys just wait for the correct one, so we need to decide whether to keep it | Our own reflection |
+Entering the correct character clears the incorrect-character indicator, while the incorrect keystroke remains included in the total incorrect count.
 
-### What we would do differently
+This improved the gameplay feel and made the typing behavior easier to understand.
 
-- Write tests alongside each class instead of leaving them for the end. We have no tests yet beyond the shared `BaseTest`, and that is the biggest gap before Deliverable 4.
-- Update the UML and spec in the same pull request as any code change that affects them.
-- Build the word loading and scoring earlier, since they were the parts of the scope we understood least and the MVP depends on both.
+**2. Countdown and gameplay transitions**
 
-### GenAI use
+We introduced `GO_SCREEN` as a separate state between the countdown and typing round.
 
-GenAI was used to draft this README, including the status table, Next Steps, and this reflection, from our scope, spec, and repository code. The scope document itself was written without GenAI.
+The player now sees a 3-2-1 countdown, followed by a brief GO screen, before the typing timer begins.
+
+We also improved timer handling so the countdown only changes during `COUNTDOWN`, `GO_SCREEN`, and `TYPING`. Additionally, Escape now correctly returns to the main menu during the GO screen.
+
+These changes made the transition between menu selection and gameplay clearer and prevented the timer from continuing to update on unrelated screens.
+
+Both features changed model logic or state and are reachable through the existing controller and view.
+
+### Predicted Changes vs. Actual Changes
+
+Our D3 prediction was based on implementing high scores. Because we switched features, the actual changes were different.
+
+| Class                                                      | D3 Prediction                                         | Actual Changes                                                                                               |
+| ---------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `State`                                                    | Add player names, scoring, and high-score transitions | Added incorrect-character feedback, improved round initialization, countdown transitions, and timer handling |
+| `Screen`                                                   | Add `NAME_ENTRY` and `HIGH_SCORES`                    | Added `GO_SCREEN`                                                                                            |
+| `Controller`                                               | Handle name-entry input                               | Removed backspace gameplay handling; existing character handling supported the new feature                   |
+| `Display`                                                  | Render high scores and name-entry screens             | Added colored typing feedback and GO screen rendering                                                        |
+| New `HighScores`                                           | Store, sort, load, and save scores                    | Not created because high scores were postponed                                                               |
+| `Queue`, `Action`, `Console`, `Game`, `Main`, `Difficulty` | Remain unchanged                                      | Remained unchanged                                                                                           |
+
+Although the feature changed, the class responsibilities mostly matched our original prediction.
+
+The model handled gameplay rules, the view handled presentation, and the controller handled input. We did not have to change the general input abstraction or main game loop to implement the updated gameplay behavior.
+
+None of the classes that we predicted should remain unchanged needed to change for these features.
+
+### Did the Change Cross the Model/View Line?
+
+The changes did require updates to both the model and view, but they did not introduce inappropriate dependencies between them.
+
+For typing feedback, `State` tracks the entered characters and stores the last incorrect character. `Display` uses the existing getters and the new `getLastIncorrect()` method to render the feedback.
+
+For the countdown feature, `State` manages the transition into `GO_SCREEN`, and `Display` renders that screen based on the current `Screen` enum.
+
+The view needed to learn about the new screen and feedback data, but it did not need access to internal state or copies of the model's fields.
+
+The existing `Controller` and `Game` architecture continued to support the new behavior without major changes.
+
+This was an important benefit of our MVC separation.
+
+### What Changed From the D3 Plan?
+
+The largest change was prioritizing MVP functionality and gameplay feel over stretch goals.
+
+We originally intended to complete more of the gameplay features and add persistent high scores. During implementation, we discovered that incorrect-character behavior, countdown presentation, round initialization, and missing tests were more immediate concerns.
+
+We therefore prioritized these issues instead of adding additional functionality to a prototype that was not yet sufficiently tested.
+
+Other important changes included:
+
+- Fixing the first word selected for each difficulty.
+- Resetting typed text and correct/incorrect character counts between rounds.
+- Removing backspace handling rather than trying to maintain its previous behavior.
+- Adding a separate GO screen.
+- Limiting timer updates to active gameplay states.
+- Expanding the automated tests from only a shared test base to 33 executable test methods.
+- Adding controller tests that verify user actions correctly reach the model.
+
+The currently implemented typing round uses a fixed 15-second timer. The variable time limits proposed in D3 remain unfinished.
+
+### Testing and Bad Input
+
+One of the largest improvements since D3 was adding tests that execute independently of the user interface.
+
+`QueueTest` now covers normal FIFO behavior, empty-queue exceptions, null elements, queue reuse, and interleaved enqueue/dequeue operations.
+
+`StateTest` covers normal gameplay behavior as well as invalid and boundary cases, including:
+
+- Incorrect characters not advancing the word.
+- Correct input clearing the incorrect-character indicator.
+- Null difficulty arguments.
+- Negative time deltas.
+- Zero menu-selection movement.
+- Repeated calls to stop the game.
+- Word-list wrapping.
+- Resetting the round between games.
+- Escape during the GO screen.
+- Timer updates on inactive screens.
+
+`ControllerTest` verifies that normal input passes through the controller into the model and that unsupported character events, invalid menu input, and ignored backspace events do not corrupt gameplay state.
+
+We also corrected our floating-point assertions to use a tolerance where required by the testing framework.
+
+The current tests pass in GitHub Actions. However, testing will need to continue as we add word loading, scoring, and difficulty scaling.
+
+### What Doesn't Work Yet?
+
+The prototype is playable, but several planned MVP features are still missing.
+
+**Word loading:** Words still come from small hard-coded lists instead of a validated and shuffled file-based word source. Missing files, empty files, and invalid file contents cannot yet be handled because the loader has not been implemented.
+
+**Scoring:** The results screen only shows correct and incorrect character counts. It does not calculate a score based on completed words.
+
+**Difficulty scaling:** Easy, Medium, and Hard currently use different word lists but all have the same 15-second round duration.
+
+**High scores:** Player names and persistent high-score storage were deferred.
+
+**Other limitations:** Backspace is currently ignored during gameplay. The controller restricts character entry to the typing screen, but the model's `type()` method does not independently validate the active screen. The timer no longer updates on inactive screens, although active screens still redraw frequently.
+
+Our existing tests cover the current prototype, but additional tests will be needed as these features are implemented.
+
+### What Would Make the Next Change Cheaper?
+
+The MVC separation helped us introduce gameplay changes without modifying the terminal abstraction or overall game loop.
+
+However, `State` currently manages many responsibilities, including menu navigation, word selection, typing validation, timers, and results.
+
+A useful future improvement would be to move word loading and selection into a separate model component. Scoring could also be separated from general game-state management.
+
+This would make it easier to add file-based words, new difficulty rules, and high scores without repeatedly expanding `State`.
+
+We would also continue writing tests alongside each feature rather than waiting until the end. Our prototype developed faster than our testing, and catching up afterward required more effort than testing each change as it was introduced.
+
+---
 
 ## Next Steps
 
-This is the plan for Deliverable 4. The point values, time limits, and owners below are proposals for the team to confirm.
+### Remaining Work for the Final Build
 
-### 1. Finishing the MVP, in order
+Our priority is completing the remaining MVP features before considering stretch goals.
 
-1. **Fix round-setup bugs in `State`.** Starting a round does not set the first word for the chosen difficulty (Medium and Hard open on "apple"), and `typedText`, `correctCharacters`, and `incorrectCharacters` are not reset between rounds. Reset all of them when a round begins.
-2. **Fix redraw and countdown display.** `State.update` marks the state dirty on every loop, so the screen is cleared and redrawn about 60 times a second. Mark it dirty only when the displayed value changes (for example, when the visible tenth of a second or the countdown digit changes). Show the countdown as 3, 2, 1, GO instead of values like "3.9...".
-3. **Make wrong letters visible and settle backspace.** Track the last wrong character in `State` and have `Display` draw correct letters green and the wrong letter red, as the scope specifies. Stop `backspace()` from decrementing `correctCharacters`, which corrupts the accuracy counts.
-4. **Load words from a file.** Add a bundled word file. Load it, validate each word, shuffle, and put the words in a `Queue<String>` owned by `State`, replacing the hard-coded lists. When the queue runs out before the timer does, reshuffle and refill it.
-5. **Scale difficulty.** Make the time limit and word length depend on difficulty (proposed: Easy 60 s, Medium 45 s, Hard 30 s) instead of the fixed 30 s.
-6. **Add scoring.** Award points only for fully completed words, by length group (proposed: 3–5 letters = 1, 6–8 = 2, 9+ = 3). Show the score on the typing screen and the results screen.
-7. **Finish bad-input handling.** Cover the cases in the scope (see the tests below). Because difficulty is chosen from a menu, out-of-range and non-numeric difficulty input can no longer occur; this change goes in the Revised scope section of the spec.
-8. **Update the docs.** Bring the UML, Data & state, and Method signatures sections in line with the final code.
+Catching up on the current prototype's tests was our first priority and has now been completed through the expanded 33-test suite.
 
-### 2. Change feature: persistent high scores
+The remaining work is ordered as follows:
 
-**What it is:** after each round the player enters a name, and the score is saved to a high-score file. A new **High Scores** menu option shows the top scores for each difficulty. This is not part of the MVP and involves file input and output, a new input mode (typing a name), and two new screens.
+| Priority  | Item                         | Plan                                                                                              |
+| --------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| Completed | Catch up on current tests    | Added model, Queue, and controller tests, including normal and bad-input cases                    |
+| 1         | Word loading                 | Load words from a bundled file, validate and shuffle them, and use a word queue                   |
+| 2         | Scoring                      | Calculate points for fully completed words according to word length                               |
+| 3         | Additional tests             | Test word loading, invalid files, scoring, and any new model methods                              |
+| 4         | Difficulty scaling           | Implement different time limits and appropriate word lengths per difficulty                       |
+| 5         | Final fixes and cleanup      | Improve active-screen redraw efficiency, resolve remaining input issues, and update documentation |
+| 6         | High scores, if time permits | Add persistent high scores only after the MVP and its tests are complete                          |
 
-**Prediction of what changes:**
+We will continue testing throughout development rather than treating tests as a separate final step.
 
-| Layer | Classes | Prediction |
-|---|---|---|
-| Model | `State` | **Changes.** New screen flow (results, then name entry, then high scores), stores the player name, records the score |
-| Model | new `HighScores` class | **New.** Holds entries, sorts them, reads and writes the file, and handles missing or corrupt files. Plain Java with no terminal use |
-| Model | `Screen` | **Changes.** Add `NAME_ENTRY` and `HIGH_SCORES` |
-| Controller | `Controller` | **Changes.** It currently accepts characters only on the typing screen, so it needs new cases for `NAME_ENTRY` |
-| View | `Display` | **Changes.** Two new screens to render, and the results screen shows the player's rank |
-| Should not change | `Queue`, `Action`, `Console`, `Game`, `Main`, `Difficulty` | The design says new screens and features live in the model, controller, and view only, and that input, the loop, and the terminal are reusable |
+### Stretch Goals
 
-We will compare this table with the actual diff and report any differences in the Deliverable 4 reflection.
+| Stretch Goal                      | Decision                                             |
+| --------------------------------- | ---------------------------------------------------- |
+| Persistent high scores            | Deferred; attempt only if MVP and tests are complete |
+| Accuracy percentage               | Optional, not committed                              |
+| Custom word sets                  | Dropped                                              |
+| Survival mode                     | Dropped                                              |
+| Additional GUI effects and shapes | Dropped                                              |
+| Green/red typing feedback         | Already implemented                                  |
 
-### 3. Stretch goals
+We are not committing to additional stretch goals at this stage. Our main goal is a complete, stable, and testable typing game.
 
-| Stretch goal | Decision |
-|---|---|
-| Calculate accuracy | **Attempt.** `State` already counts correct and incorrect keystrokes, so this adds a getter and one line on the results screen |
-| Store high scores for each section and player in a file | **Attempt.** This is the change feature above |
-| Load a custom word set from a file | **Drop.** The bundled word file is the only source; the loader will be written so a path option could be added later |
-| Additional game mode: survival (mistakes reduce time) | **Drop.** Not enough time alongside the change feature |
-| Nicer GUI (colors, shapes, better visuals) | **Partly.** The green/red letter feedback is in the MVP. Shapes and other visual extras are dropped |
+### Planned Three-Minute Demo
 
-### 4. New tests
+| Time      | Demonstration                                                                                                          |
+| --------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 0:00–0:20 | Launch the game, show main-menu navigation, and choose a difficulty                                                    |
+| 0:20–0:40 | Demonstrate the 3-2-1 countdown and separate GO transition                                                             |
+| 0:40–1:15 | Demonstrate typing, green correct letters, red incorrect input, and word progression                                   |
+| 1:15–1:35 | Show the round ending, results screen, and return to the main menu                                                     |
+| 1:35–2:15 | Explain the flow through `Console`, `Controller`, `State`, and `Display`, including the new features                   |
+| 2:15–2:50 | Demonstrate or explain running the 33 tests through Gradle, including bad-input tests and interleaved Queue operations |
+| 2:50–3:00 | Summarize remaining MVP features and explain why high scores were deferred                                             |
 
-All tests extend `BaseTest` and run without a terminal. `State`, `Queue`, `Controller`, and `HighScores` never use `Console`, so none of them need a terminal.
+The demo will focus on the current working prototype, including both replacement change features.
 
-| Class | Methods | Normal case | Bad-input case |
-|---|---|---|---|
-| `Queue` | `enqueue`, `dequeue`, `peek`, `isEmpty`, `size` | Items come out in the order they went in; size and `isEmpty` track correctly; reusable after being emptied | `dequeue` and `peek` on an empty queue throw `NoSuchElementException` |
-| `State` | `moveSelection`, `confirm`, `back` | Selection wraps; confirm moves through the screens | Delta of 0 changes nothing; `confirm` is ignored on the typing screen |
-| `State` | `setDifficulty` | Sets difficulty and time limit | `null` throws `NullPointerException` |
-| `State` | `type`, `backspace`, `advanceWord` | Correct letter advances; finishing a word loads the next and scores it; the queue refills when empty | Wrong letter does not advance and is counted; backspace on empty text does nothing; letters ignored once the round ends |
-| `State` | `update` | Countdown leads to typing, and typing leads to results at zero | Negative `deltaTime` throws `IllegalArgumentException`; an unfinished word earns no points |
-| `State` | `endGeneration` | Generation increases once after one or more changes | No change since last call leaves the generation the same |
-| `Controller` | `process` | Each action type reaches the right `State` method on each screen | Characters on a menu and Enter during typing are ignored; `OTHER` actions do nothing |
-| Word loader | load, validate, shuffle | Valid words are loaded, lowercased, and shuffled (seeded `Random` for repeatable tests) | Missing file, empty file, blank lines, words with spaces or digits, and words containing apostrophes or hyphens (accepted) |
-| Scoring | points by length | Each length group awards the right points | Zero-length and partial words award 0 |
-| `HighScores` | add, top *N*, save, load | Entries are sorted by score and survive a save and load | Missing file starts empty; a corrupt line is skipped; empty or oversized names are rejected; ties keep a stable order |
+We will be prepared to explain how the new features interact with the model, controller, and view, and how the tests verify that behavior.
 
-### 5. Who does what
+### Team Responsibilities
 
-| Item | Owner | Support |
-|---|---|---|
-| Round-setup and redraw fixes (steps 1–2), countdown display | Lucas | |
-| Wrong-letter state and green/red rendering (step 3) | Lucas | Krish |
-| Word file loading, validation, shuffling, word queue (step 4) | Krish | Josiah |
-| Difficulty scaling and scoring (steps 5–6) | Krish | Lucas |
-| Bad-input handling and its tests (step 7) | Josiah | Krish |
-| Change feature: `HighScores` model and file handling | Josiah | |
-| Change feature: new screens, `Controller` and `Display` changes | Lucas | Josiah |
-| Accuracy on the results screen | Krish | |
-| `Queue`, `State`, and `Controller` tests | Josiah | Krish |
-| UML, Data & state, Method signatures updates (step 8) | Krish | |
-| Revised scope and the change-feature prediction vs. actual comparison | Josiah | Lucas |
+The following planned assignments carry forward our D3 responsibilities, adjusted for the work remaining after D4.
 
-Each member also reviews at least one pull request from another member before it merges into `main`.
+| Remaining Item                            | Primary Owner | Support          |
+| ----------------------------------------- | ------------- | ---------------- |
+| File-based word loading and validation    | Krish         | Josiah           |
+| Word shuffling and queue integration      | Krish         | Josiah           |
+| Scoring and results calculations          | Krish         | Lucas            |
+| Additional tests for new features         | Josiah        | Krish            |
+| Difficulty scaling                        | Krish         | Lucas            |
+| Rendering improvements and gameplay fixes | Lucas         | Josiah           |
+| High-score model, if attempted            | Josiah        | Krish            |
+| High-score screens, if attempted          | Lucas         | Josiah           |
+| UML, scope, and method documentation      | Krish         | Josiah           |
+| README integration and final review       | Lucas         | Krish and Josiah |
+
+Every member is responsible for reviewing changes, running tests, and understanding the implementation before the final demonstration.
+
+---
+
+## Attribution
+
+The following table lists every Java class and test file in the repository, along with the contributions identified from our development history.
+
+| File                  | Contributor(s)       | Contribution                                                                                                                                                                                               |
+| --------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Main.java`           | Lucas                | Wrote and revised the application entry point                                                                                                                                                              |
+| `Game.java`           | Lucas                | Implemented the game loop and coordination between model, controller, and view                                                                                                                             |
+| `State.java`          | Krish, Lucas, Josiah | Krish implemented the initial game-state model; Lucas revised round initialization, countdown behavior, incorrect-input feedback, and timer handling; Josiah contributed earlier backspace-related changes |
+| `Queue.java`          | Krish, Lucas         | Krish implemented the linked FIFO queue; Lucas created the initial class template and integrated the class                                                                                                 |
+| `Screen.java`         | Lucas                | Created and updated the screen enum, including `GO_SCREEN`                                                                                                                                                 |
+| `Difficulty.java`     | Lucas                | Created the difficulty enum                                                                                                                                                                                |
+| `Controller.java`     | Lucas, Josiah        | Lucas implemented and revised input processing; Josiah contributed earlier backspace handling                                                                                                              |
+| `Action.java`         | Lucas, Josiah        | Lucas created the input event record; Josiah revised backspace-related input handling                                                                                                                      |
+| `Console.java`        | Lucas, Josiah        | Lucas implemented terminal input/output and key decoding; Josiah revised backspace input handling                                                                                                          |
+| `Display.java`        | Lucas, Krish         | Lucas implemented rendering and updated countdown and colored typing feedback; Krish made earlier revisions                                                                                                |
+| `BaseTest.java`       | Lucas                | Created the shared course testing base                                                                                                                                                                     |
+| `QueueTest.java`      | Krish, Lucas         | Krish wrote the original Queue tests; Lucas added the interleaved-operation test with GenAI assistance                                                                                                     |
+| `StateTest.java`      | Krish, Lucas         | Krish wrote the original State tests; Lucas added and revised tests for feedback, invalid input, countdown transitions, round resets, navigation, and timer behavior, with GenAI assistance                |
+| `ControllerTest.java` | Lucas                | Added normal-input and bad-input controller tests with GenAI assistance                                                                                                                                    |
+
+### GenAI Use
+
+We used ChatGPT as an assistant during development and documentation.
+
+GenAI helped us review the repository and compare our implementation with the Deliverable 3 plan and Deliverable 4 requirements. It was used to generate candidate test cases for `State`, `Queue`, and `Controller`, suggest improvements to countdown handling, identify possible bugs, and draft sections of this README.
+
+The generated test suggestions and code changes were reviewed, adapted where necessary, and integrated into the project by the team. We ran the tests through Gradle and GitHub Actions to verify their behavior.
+
+GenAI also assisted in organizing our reflection, identifying the differences between planned and actual changes, preparing the final-build priorities, and drafting the attribution table.
+
+The team remains responsible for understanding the implementation, verifying the tests, confirming individual contributions, and explaining the design decisions during grading.

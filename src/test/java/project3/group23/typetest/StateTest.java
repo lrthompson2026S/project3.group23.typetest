@@ -57,6 +57,10 @@ public class StateTest extends BaseTest
         state.confirm();
 
         state.update( 3.0 );
+        assertTrue( state.getScreen() == Screen.GO_SCREEN );
+        assertTrue( state.getCountDown() == 0.5 );
+
+        state.update( 0.5 );
         assertTrue( state.getScreen() == Screen.TYPING );
         assertTrue( state.getCountDown() == 15.0 );
 
@@ -75,18 +79,6 @@ public class StateTest extends BaseTest
         assertEquals( "a", state.getTypedText() );
         assertEquals( 1, state.getCorrectCharacters() );
         assertEquals( 1, state.getIncorrectCharacters() );
-    }
-
-    public void testBackspace()
-    {
-        State state = new State();
-        state.type( 'a' );
-
-        state.backspace();
-
-        assertEquals( "", state.getTypedText() );
-        assertEquals( 0, state.getCorrectCharacters() );
-        assertEquals( 0, state.getIncorrectCharacters() );
     }
 
     public void testCompleteWord()

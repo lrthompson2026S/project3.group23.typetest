@@ -42,9 +42,7 @@ public class State
     }
 
     public char getLastIncorrect()
-    {
-        return lastIncorrect;
-    }
+    { return lastIncorrect; }
 
     public long getGeneration()
     { return generation; }
@@ -211,7 +209,6 @@ public class State
             throw new IllegalArgumentException( "deltaTime must not be negative" );
         }
         countDown -= deltaTime;
-
 
         if ( screen == Screen.COUNTDOWN )
         {

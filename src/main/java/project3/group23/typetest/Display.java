@@ -1,9 +1,9 @@
 
 package project3.group23.typetest;
 
-import io.leego.banana.Ansi;
-
 import java.util.List;
+
+import io.leego.banana.Ansi;
 
 public class Display
 {
@@ -30,12 +30,12 @@ public class Display
                 renderMenu( "Select Difficulty", state );
 
             case COUNTDOWN -> {
-                console.append("Get ready...\n");
-                console.append(String.valueOf((int)Math.ceil(state.getCountDown())));
-                console.append("...\n");
+                console.append( "Get ready...\n" );
+                console.append( String.valueOf( (int) Math.ceil( state.getCountDown() ) ) );
+                console.append( "...\n" );
             }
             case GO_SCREEN -> {
-                console.append("\nGO!\n");
+                console.append( "\nGO!\n" );
             }
 
             case TYPING ->
@@ -74,17 +74,17 @@ public class Display
             .append( "\n\n" );
 
         console.append( "\n\t" )
-            .append( Ansi.ansify(state.getTypedText().toUpperCase(), Ansi.GREEN ) )
+            .append( Ansi.ansify( state.getTypedText().toUpperCase(), Ansi.GREEN ) )
             .append( state.getCurrentWord().toUpperCase().substring( state.getTypedText().length() ) )
-            .append("\n");
+            .append( "\n" );
 
         char incorrect = state.getLastIncorrect();
-        if(incorrect != 0)
+        if ( incorrect != 0 )
         {
             console.append( "\t" )
-                .append(" ".repeat(state.getTypedText().length()))
-                .append( Ansi.ansify(String.valueOf(incorrect).toUpperCase(), Ansi.RED))
-                .append( "\n");
+                .append( " ".repeat( state.getTypedText().length() ) )
+                .append( Ansi.ansify( String.valueOf( incorrect ).toUpperCase(), Ansi.RED ) )
+                .append( "\n" );
         }
     }
 

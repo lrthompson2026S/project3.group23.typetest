@@ -12,14 +12,15 @@ public class State
     private static final List<String> HARD_WORDS = List
         .of( "polymorphism", "synchronization", "implementation", "characterization" );
 
-    private long generation = 0;
-    private boolean dirty = false;
-    private boolean running = true;
-    private Screen screen = Screen.MAIN_MENU;
-    private int selectedOption = 0;
-    private Difficulty difficulty = Difficulty.EASY;
-    private String currentWord = EASY_WORDS.get( 0 );
-    private String typedText = "";
+    private long generation;
+    private boolean dirty;
+    private boolean running;
+    private Screen screen;
+    private int selectedOption;
+    private Difficulty difficulty;
+    private String currentWord;
+    private String typedText;
+    private char lastIncorrect;
     private int correctCharacters;
     private int incorrectCharacters;
     private double countDown;
@@ -32,12 +33,16 @@ public class State
         screen = Screen.MAIN_MENU;
         selectedOption = 0;
         difficulty = Difficulty.EASY;
-        currentWord = EASY_WORDS.get( 0 );
+        currentWord = EASY_WORDS.getFirst();
         typedText = "";
         correctCharacters = 0;
         incorrectCharacters = 0;
         countDown = 0.0;
+        lastIncorrect = 0;
     }
+
+    public char getLastIncorrect()
+    { return lastIncorrect; }
 
     public long getGeneration()
     { return generation; }
@@ -62,12 +67,6 @@ public class State
 
     public String getTypedText()
     { return typedText; }
-
-    public void setTypedText( String text )
-    {
-        typedText = Objects.requireNonNull( text, "text" );
-        markDirty();
-    }
 
     public int getCorrectCharacters()
     { return correctCharacters; }
@@ -107,6 +106,11 @@ public class State
                 break;
             case DIFFICULTY_MENU :
                 setDifficulty( Difficulty.values()[selectedOption] );
+                currentWord = wordsForDifficulty().getFirst();
+                lastIncorrect = 0;
+                correctCharacters = 0;
+                incorrectCharacters = 0;
+                typedText = "";
                 screen = Screen.COUNTDOWN;
                 selectedOption = 0;
                 countDown = 3;
@@ -159,6 +163,7 @@ public class State
             {
                 correctCharacters++;
                 typedText += character;
+                lastIncorrect = 0;
 
                 if ( typedText.length() == currentWord.length() )
                 {
@@ -167,6 +172,7 @@ public class State
             }
             else
             {
+                lastIncorrect = character;
                 incorrectCharacters++;
             }
         }
@@ -187,16 +193,6 @@ public class State
 
     }
 
-    public void backspace()
-    {
-        if ( !typedText.isEmpty() )
-        {
-            typedText = typedText.substring( 0, typedText.length() - 1 );
-            correctCharacters--;
-            markDirty();
-        }
-    }
-
     public void advanceWord()
     {
         List<String> words = wordsForDifficulty();
@@ -215,6 +211,14 @@ public class State
         countDown -= deltaTime;
 
         if ( screen == Screen.COUNTDOWN )
+        {
+            if ( countDown <= 0 )
+            {
+                countDown = .5;
+                screen = Screen.GO_SCREEN;
+            }
+        }
+        if ( screen == Screen.GO_SCREEN )
         {
             if ( countDown <= 0 )
             {

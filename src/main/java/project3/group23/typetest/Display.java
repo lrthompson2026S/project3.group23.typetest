@@ -3,6 +3,8 @@ package project3.group23.typetest;
 
 import java.util.List;
 
+import io.leego.banana.Ansi;
+
 public class Display
 {
     private final Console console;
@@ -18,6 +20,7 @@ public class Display
     {
         console.clear();
 
+        double countDown = state.getCountDown();
         switch (state.getScreen())
         {
             case MAIN_MENU ->
@@ -28,8 +31,11 @@ public class Display
 
             case COUNTDOWN -> {
                 console.append( "Get ready...\n" );
-                console.append( String.valueOf( Math.floor( state.getCountDown() * 100 ) / 100 ) );
+                console.append( String.valueOf( (int) Math.ceil( state.getCountDown() ) ) );
                 console.append( "...\n" );
+            }
+            case GO_SCREEN -> {
+                console.append( "\nGO!\n" );
             }
 
             case TYPING ->
@@ -67,13 +73,19 @@ public class Display
             .append( String.format( "%.2f s", timeLeft ) )
             .append( "\n\n" );
 
-        console.append( "Target: " )
-            .append( state.getCurrentWord() )
+        console.append( "\n\t" )
+            .append( Ansi.ansify( state.getTypedText().toUpperCase(), Ansi.GREEN ) )
+            .append( state.getCurrentWord().toUpperCase().substring( state.getTypedText().length() ) )
             .append( "\n" );
 
-        console.append( "Typed:  " )
-            .append( state.getTypedText() )
-            .append( "\n" );
+        char incorrect = state.getLastIncorrect();
+        if ( incorrect != 0 )
+        {
+            console.append( "\t" )
+                .append( " ".repeat( state.getTypedText().length() ) )
+                .append( Ansi.ansify( String.valueOf( incorrect ).toUpperCase(), Ansi.RED ) )
+                .append( "\n" );
+        }
     }
 
     private void renderResults( State state )

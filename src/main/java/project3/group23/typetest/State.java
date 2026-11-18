@@ -209,6 +209,14 @@ public class State
         {
             throw new IllegalArgumentException( "deltaTime must not be negative" );
         }
+        // The clock only advances while a round is starting or in progress.
+        if ( screen != Screen.COUNTDOWN
+            && screen != Screen.GO_SCREEN
+            && screen != Screen.TYPING )
+        {
+            return;
+        }
+
         countDown -= deltaTime;
 
         if ( screen == Screen.COUNTDOWN )

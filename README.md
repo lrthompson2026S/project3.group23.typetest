@@ -57,7 +57,7 @@ Tests are located under `src/test/java/project3/group23/typetest/` and use the c
 Run all tests using:
 
 ```bash
-./gradlew test
+./gradlew test --rerun-tasks
 ```
 
 The current repository contains **33 test methods**:
@@ -343,10 +343,10 @@ We will continue testing throughout development rather than treating tests as a 
 | Stretch Goal                      | Decision                                             |
 | --------------------------------- | ---------------------------------------------------- |
 | Persistent high scores            | Deferred; attempt only if MVP and tests are complete |
-| Accuracy percentage               | Optional, not committed                              |
-| Custom word sets                  | Dropped                                              |
+| Accuracy percentage               | Optional, not committed (could become scoring)                              |
+| Custom word sets                  | Potential                                              |
 | Survival mode                     | Dropped                                              |
-| Additional GUI effects and shapes | Dropped                                              |
+| Additional GUI effects and shapes | Potential                                              |
 | Green/red typing feedback         | Already implemented                                  |
 
 We are not committing to additional stretch goals at this stage. Our main goal is a complete, stable, and testable typing game.

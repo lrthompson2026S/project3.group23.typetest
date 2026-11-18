@@ -46,12 +46,6 @@ public class Controller
                         action.type() == Action.Type.ARROW_UP ? -1 : 1 );
                 }
             }
-            case BACKSPACE -> {
-                if ( screen == Screen.TYPING )
-                {
-                    state.backspace();
-                }
-            }
             case CHARACTER -> {
                 if ( screen == Screen.TYPING
                     && Character.isBmpCodePoint( action.value() ) )

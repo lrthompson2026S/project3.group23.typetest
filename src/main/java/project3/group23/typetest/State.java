@@ -154,12 +154,20 @@ public class State
     {
         if ( typedText.length() < currentWord.length() )
         {
-            correctCharacters++;
-            typedText += character;
-
-            if ( typedText.length() == currentWord.length() )
+            char expected = currentWord.charAt( typedText.length() );
+            if ( character == expected )
             {
-                advanceWord();
+                correctCharacters++;
+                typedText += character;
+
+                if ( typedText.length() == currentWord.length() )
+                {
+                    advanceWord();
+                }
+            }
+            else
+            {
+                incorrectCharacters++;
             }
         }
         else

@@ -235,7 +235,87 @@ public class StateTest extends BaseTest
         assertEquals( "apple", state.getCurrentWord() );
     }
 
+    public void testStopIdempotent()
+    {
+        State state = new State();
 
+        state.stop();
+        assertFalse( state.isRunning() );
+        state.endGeneration();
+        assertEquals( 1, state.getGeneration() );
+
+        state.stop();
+        state.endGeneration();
+
+        assertFalse( state.isRunning() );
+        assertEquals( 1, state.getGeneration() );
+    }
+
+    public void testDifficultyStartingWords()
+    {
+        State medium = new State();
+        medium.setDifficulty( Difficulty.MEDIUM );
+        medium.confirm();
+        medium.confirm();
+
+        assertEquals( "keyboard", medium.getCurrentWord() );
+        assertEquals( Screen.COUNTDOWN, medium.getScreen() );
+
+        State hard = new State();
+        hard.setDifficulty( Difficulty.HARD );
+        hard.confirm();
+        hard.confirm();
+
+        assertEquals( "polymorphism", hard.getCurrentWord() );
+        assertEquals( Screen.COUNTDOWN, hard.getScreen() );
+    }
+
+    public void testResultsNavigation()
+    {
+        State state = new State();
+        state.confirm();
+        state.confirm();
+        state.update( 3.0 );
+        state.update( 0.5 );
+        state.update( 15.0 );
+
+        assertEquals( Screen.RESULTS, state.getScreen() );
+
+        state.confirm();
+
+        assertEquals( Screen.MAIN_MENU, state.getScreen() );
+        assertEquals( 0, state.getSelectedOption() );
+    }
+
+    public void testInactiveScreensDoNotAdvanceTimer()
+    {
+        State state = new State();
+
+        double beforeCD = state.getCountDown();
+        state.update( 100.0 );
+        state.endGeneration();
+
+        assertEquals( Screen.MAIN_MENU, state.getScreen() );
+        assertEquals( beforeCD, state.getCountDown(), 0.000001 );
+        assertEquals( 0, state.getGeneration() );
+
+        state.confirm();
+        state.confirm();
+        state.update( 3.0 );
+        state.update( 0.5 );
+        state.update( 15.0 );
+
+        assertEquals( Screen.RESULTS, state.getScreen() );
+
+        state.endGeneration();
+        long generation = state.getGeneration();
+
+        state.update( 100.0 );
+        state.endGeneration();
+
+        assertEquals( 0.0, state.getCountDown(), 0.00001 );
+        assertEquals( generation, state.getGeneration() );
+    }
 
     public void testBackFromGoScreen()
     {
@@ -243,14 +323,14 @@ public class StateTest extends BaseTest
 
         state.confirm();
         state.confirm();
-        state.update( 3.0 );
+        state.update( 4.0 );
 
         assertEquals( Screen.GO_SCREEN, state.getScreen() );
 
         state.back();
 
         assertEquals( Screen.MAIN_MENU, state.getScreen() );
-        assertEquals( 0.0, state.getCountDown() );
+        assertEquals( 0.0, state.getCountDown(), 0.000001 );
     }
 
 }

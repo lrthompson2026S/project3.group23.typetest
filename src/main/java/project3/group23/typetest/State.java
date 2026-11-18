@@ -209,8 +209,15 @@ public class State
         {
             throw new IllegalArgumentException( "deltaTime must not be negative" );
         }
-        countDown -= deltaTime;
 
+        if ( screen != Screen.COUNTDOWN
+            && screen != Screen.GO_SCREEN
+            && screen != Screen.TYPING )
+        {
+            return;
+        }
+
+        countDown -= deltaTime;
         if ( screen == Screen.COUNTDOWN )
         {
             if ( countDown <= 0 )
